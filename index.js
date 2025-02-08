@@ -1,60 +1,42 @@
-import http from 'http'
-import fs from 'fs';
+import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 
-const handleServerError = (res) => {
-    fs.readFile('404.html', (err, content) => {
-        if (err) {
-            res.writeHead(404);
-            res.end('404 not found');
-            return;
-        }
-        res.writeHead(404, { 'Content-Type': 'text/html' });
-        res.end(content);
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
 
-    })
+const app = express();
 
+const PORT = process.env.PORT || '8080'
 
-};
+app.use(express.static('public'));
 
-const server = http.createServer((req, res) => {
-    const urlPath = req.url;
-
-    if (urlPath === '/' || urlPath === '/home') {
-        fs.readFile('home.html', (err, content) => {
-            if (err) {
-                handleServerError(res)
-                return;
-            }
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(content);
-
-        })
-    } else if (urlPath === '/about') {
-
-        fs.readFile('about.html', (err, content) => {
-            if (err) {
-                handleServerError(res)
-                return;
-            }
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(content);
-        })
-
-    } else if(urlPath === '/contact') {
-        fs.readFile('contact-me.html', (err, content) => {
-            if (err) {
-                handleServerError(res)
-                return;
-            }
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(content);
-
-        })
-
-    }
+app.get('/', (req, res) => {
+    res.sendFile(path.join(_dirname, 'home.html'));
 })
 
-server.listen(8080, () => {
-    console.log("Server is running")
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(_dirname, 'about.html'))
+})
+
+app.get('/contact', (req, res) => {
+    res.sendFile(path.join(_dirname, 'contact-me.html'));
+})
+
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(_dirname, '404.html'))
+})
+
+app.use((err, req, res, next) => {
+    console.log(err);
+    res.status(500).send('Internal Server Error');
+})
+
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`)
 })
